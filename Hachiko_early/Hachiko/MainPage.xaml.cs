@@ -10,18 +10,29 @@ public partial class MainPage : ContentPage {
     private List<Detection> _detections = new();
     private bool _processing;
     private CancellationTokenSource _cts;
+    private readonly Dictionary<string, DateTime> _activeObjects = new();
+
+    private int _globalFrameId = 0;
+
     private int _frameCount = 0;
     private int _lastW = 640;
     private int _lastH = 640;
-
     private int _inferenceCount = 0;
     private DateTime _fpsTimer = DateTime.Now;
 
     private float _currentZoom = 1.0f;
-    private bool _cameraReady = false;   // guard — don't set zoom until camera is running
+    private bool _cameraReady = false;
+
+    // ── NEW: speech + distance ──────────────────────────────────────────────
+    private SpeechQueue _speech;
+
+    // How many pixels tall the inference frame is (set once we know camera res)
+    // We use _lastH which is the *original* camera frame height.
+    // DistanceEstimator expects the pixel height in the space where box coords live.
 
     public MainPage() {
         InitializeComponent();
+        _speech = new SpeechQueue();
         LoadModel();
     }
 
@@ -57,7 +68,6 @@ public partial class MainPage : ContentPage {
     // ─── Camera Setup ─────────────────────────────────────────────────────────
 
     void CamView_CamerasLoaded(object s, EventArgs e) {
-        // Pick the back camera with the widest FOV (lowest MinZoomFactor)
         var backCameras = CamView.Cameras
             .Where(c => c.Position == CameraPosition.Back)
             .ToList();
@@ -72,8 +82,8 @@ public partial class MainPage : ContentPage {
 
         MainThread.BeginInvokeOnMainThread(async () => {
             var result = await CamView.StartCameraAsync();
-
             if (result == CameraResult.Success) {
+                _cameraReady = true;
                 await ApplyZoomAsync(0.5f);
             }
 
@@ -83,26 +93,18 @@ public partial class MainPage : ContentPage {
         });
     }
 
-    // ─── Zoom ────────────────────────────────────────────────────────
+    // ─── Zoom ─────────────────────────────────────────────────────────────────
+
     async Task ApplyZoomAsync(float zoom) {
         _currentZoom = zoom;
-
-        // Only drive the camera property once it is fully started
         if (_cameraReady) {
             try {
-                // hjam40/Camera.MAUI: ZoomFactor is a bindable property on CameraView
                 CamView.ZoomFactor = zoom;
-
-                // Small delay then re-apply — some Android devices ignore the first set
                 await Task.Delay(80);
                 CamView.ZoomFactor = zoom;
-            } catch { /* ignore if not supported */ }
+            } catch { }
         }
-
-
     }
-
-
 
     // ─── Inference Loop ───────────────────────────────────────────────────────
 
@@ -110,7 +112,9 @@ public partial class MainPage : ContentPage {
         while (!token.IsCancellationRequested) {
             try {
                 _frameCount++;
+                _globalFrameId++;
 
+                // Run inference on every other frame (was every 3rd)
                 if (_frameCount % 2 != 0 || _processing || _yolo == null) {
                     await Task.Delay(16, token);
                     continue;
@@ -143,9 +147,11 @@ public partial class MainPage : ContentPage {
                     _lastW = imgW;
                     _lastH = imgH;
 
-                    _detections = await Task.Run(() => _yolo.Detect(tensor, imgW, imgH));
+                    var currentDetections = await Task.Run(() => _yolo.Detect(tensor, imgW, imgH));
+                    _detections = currentDetections;
                     _inferenceCount++;
 
+                    // ── FPS / count HUD ──────────────────────────────────────
                     var now = DateTime.Now;
                     double elapsed = (now - _fpsTimer).TotalSeconds;
                     if (elapsed >= 1.0) {
@@ -157,14 +163,63 @@ public partial class MainPage : ContentPage {
                         MainThread.BeginInvokeOnMainThread(() => {
                             FpsLabel.Text = fps.ToString();
                             ObjLabel.Text = objCount.ToString();
-                            });
+                        });
                     }
+
+                    // ── Announce detections ───────────────────────────────────
+                    AnnounceDetections(_detections, imgW, imgH);
 
                     MainThread.BeginInvokeOnMainThread(() => OverlayCanvas.InvalidateSurface());
                 }
             } catch (OperationCanceledException) { break; } catch { /* skip bad frame */ } finally {
                 _processing = false;
                 await Task.Delay(16, token);
+            }
+        }
+    }
+
+    // ─── Speech Announcer ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// For each detection, build a phrase like:
+    ///   "Person ahead, 2.3 metres"
+    ///   "Car to your left, 8 metres"
+    /// The SpeechQueue handles cooldown so the same phrase isn't repeated
+    /// within <CooldownSeconds> seconds.
+    /// We sort by closest first so the nearest hazard is spoken first.
+    /// </summary>
+    void AnnounceDetections(List<Detection> dets, int frameW, int frameH) {
+        if (dets == null || dets.Count == 0) return;
+
+        var currentKeys = new HashSet<string>();
+        var candidates = new List<(string key, string phrase, float dist)>();
+
+        foreach (var det in dets) {
+            float? distM = DistanceEstimator.EstimateMetres(det, frameH);
+            if (distM == null) continue;
+
+            string direction = DistanceEstimator.GetDirection(det, frameW);
+            string distStr = DistanceEstimator.FormatDistance(distM.Value);
+
+            string label = char.ToUpper(det.Label[0]) + det.Label[1..];
+
+            // ✅ STABLE identity (THIS is the fix)
+            string key = $"{det.Label}:{(int)(det.X + det.Width / 2) / 50}:{(int)(det.Y + det.Height / 2) / 50}";
+            string phrase = $"{label} {direction}, {distStr}";
+
+            currentKeys.Add(key);
+            candidates.Add((key, phrase, distM.Value));
+        }
+
+        // remove missing objects
+        var toRemove = _activeObjects.Keys.Where(k => !currentKeys.Contains(k)).ToList();
+        foreach (var k in toRemove)
+            _activeObjects.Remove(k);
+
+        foreach (var (key, phrase, _) in candidates.OrderBy(c => c.dist)) {
+            if (!_activeObjects.ContainsKey(key)) {
+                _activeObjects[key] = DateTime.Now;
+                _speech.Speak(phrase);
             }
         }
     }
@@ -183,6 +238,7 @@ public partial class MainPage : ContentPage {
         using var rgb = bmp.Copy(SKColorType.Rgb888x);
         if (rgb == null) return (null, 0, 0);
 
+        // SKFilterQuality.None is the fastest — negligible accuracy cost at 640px
         using var resized = rgb.Resize(
             new SKImageInfo(size, size, SKColorType.Rgb888x),
             SKFilterQuality.None);
@@ -243,12 +299,30 @@ public partial class MainPage : ContentPage {
 
             canvas.DrawRect(x, y, w, h, boxPaint);
 
-            string label = $"{det.Label} {det.Confidence:P0}";
+            // ── Label: "person ahead 2.3m  87%" ─────────────────────────────
+            string distPart = "";
+            float? distM = DistanceEstimator.EstimateMetres(det, _lastH);
+            if (distM.HasValue) {
+                string dir = DistanceEstimator.GetDirection(det, _lastW);
+                distPart = $" | {dir} {distM.Value:F1}m";
+            }
+
+            string label = $"{det.Label}{distPart}  {det.Confidence:P0}";
             float tw = textPaint.MeasureText(label);
             float labelY = y > labelH + 4 ? y - labelH : y + h + 2;
 
             canvas.DrawRoundRect(x, labelY, tw + 16, labelH, 6, 6, bgPaint);
             canvas.DrawText(label, x + 8, labelY + labelH - 6, textPaint);
         }
+    }
+
+    // ─── Dispose ──────────────────────────────────────────────────────────────
+
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args) {
+        if (args.NewHandler == null) {
+            _speech?.Dispose();
+            _speech = null;
+        }
+        base.OnHandlerChanging(args);
     }
 }
