@@ -93,8 +93,8 @@ public static class DistanceEstimator {
         float cx = det.X + det.Width / 2f;
         float third = frameWidthPx / 3f;
 
-        if (cx < third) return "to your left";
-        if (cx > third * 2f) return "to your right";
+        if (cx < third) return "left";
+        if (cx > third * 2f) return "right";
         return "ahead";
     }
 }

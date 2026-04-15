@@ -10,7 +10,7 @@ public partial class MainPage : ContentPage {
     private List<Detection> _detections = new();
     private bool _processing;
     private CancellationTokenSource _cts;
-    private readonly Dictionary<string, DateTime> _activeObjects = new();
+    private readonly Dictionary<string, DateTime> _lastSeen = new();
 
     private int _globalFrameId = 0;
 
@@ -140,14 +140,12 @@ public partial class MainPage : ContentPage {
                     continue;
                 }
 
-                (float[] tensor, int imgW, int imgH) =
-                    await Task.Run(() => DecodeAndPreprocess(bytes));
-
-                if (tensor != null) {
+                (bool ok, int imgW, int imgH) = await Task.Run(() => DecodeIntoYolo(bytes));
+                if (ok) {
+                    var currentDetections = await Task.Run(() => _yolo.Detect(imgW, imgH));
                     _lastW = imgW;
                     _lastH = imgH;
 
-                    var currentDetections = await Task.Run(() => _yolo.Detect(tensor, imgW, imgH));
                     _detections = currentDetections;
                     _inferenceCount++;
 
@@ -180,85 +178,138 @@ public partial class MainPage : ContentPage {
 
     // ─── Speech Announcer ─────────────────────────────────────────────────────
 
-    /// <summary>
-    /// For each detection, build a phrase like:
-    ///   "Person ahead, 2.3 metres"
-    ///   "Car to your left, 8 metres"
-    /// The SpeechQueue handles cooldown so the same phrase isn't repeated
-    /// within <CooldownSeconds> seconds.
-    /// We sort by closest first so the nearest hazard is spoken first.
-    /// </summary>
+    // ─── Movable object categories ────────────────────────────────────────────────
+
+    private static readonly HashSet<string> MovableLabels = new(StringComparer.OrdinalIgnoreCase) {
+    "person", "car", "motorcycle", "bicycle", "bus", "truck",
+    "cat", "dog", "bird", "horse", "sheep", "cow", "elephant",
+    "bear", "zebra", "giraffe"
+};
+
+    // How long (ms) an object must be absent before we forget it
+    private const int StaleThresholdMs = 500;
+
+    // ─── Announce ─────────────────────────────────────────────────────────────────
+
+    // ─── Announce ─────────────────────────────────────────────────────────────────
+
     void AnnounceDetections(List<Detection> dets, int frameW, int frameH) {
         if (dets == null || dets.Count == 0) return;
 
-        var currentKeys = new HashSet<string>();
-        var candidates = new List<(string key, string phrase, float dist)>();
+        var now = DateTime.Now;
+        var activeKeys = new HashSet<string>();
 
-        foreach (var det in dets) {
-            float? distM = DistanceEstimator.EstimateMetres(det, frameH);
-            if (distM == null) continue;
+        // ── 1. Split movable vs static ───────────────────────────────────────────
+        var movable = dets.Where(d => MovableLabels.Contains(d.Label)).ToList();
+        var toProcess = movable.Count > 0 ? movable : dets;
+        bool hasMovable = movable.Count > 0;
+        bool manyObjects = toProcess.Count >= 2;
 
-            string direction = DistanceEstimator.GetDirection(det, frameW);
-            string distStr = DistanceEstimator.FormatDistance(distM.Value);
+        // ── 2. Deduplicate same-label objects by merging into one announcement ───
+        //    e.g. 3 "person" → one "3 people" entry (closest one sets the position)
+        var grouped = toProcess
+            .GroupBy(d => d.Label)
+            .Select(g => {
+                var closest = g.OrderBy(d => DistanceEstimator.EstimateMetres(d, frameH) ?? float.MaxValue).First();
+                return (label: g.Key, count: g.Count(), rep: closest);
+            })
+            .ToList();
 
-            string label = char.ToUpper(det.Label[0]) + det.Label[1..];
+        // ── 3. Build candidate phrases, sorted closest-first ─────────────────────
+        var candidates = new List<(string key, string phrase, float dist, bool isMovable)>();
 
-            // ✅ STABLE identity (THIS is the fix)
-            string key = $"{det.Label}:{(int)(det.X + det.Width / 2) / 50}:{(int)(det.Y + det.Height / 2) / 50}";
-            string phrase = $"{label} {direction}, {distStr}";
+        foreach (var (label, count, rep) in grouped) {
+            float? distM = DistanceEstimator.EstimateMetres(rep, frameH);
+            float sortDist = distM ?? float.MaxValue;
 
-            currentKeys.Add(key);
-            candidates.Add((key, phrase, distM.Value));
-        }
+            // Stable spatial key (80px grid cells)
+            int cx = (int)(rep.X + rep.Width / 2f) / 80;
+            int cy = (int)(rep.Y + rep.Height / 2f) / 80;
+            string key = $"{label}:{cx}:{cy}";
 
-        // remove missing objects
-        var toRemove = _activeObjects.Keys.Where(k => !currentKeys.Contains(k)).ToList();
-        foreach (var k in toRemove)
-            _activeObjects.Remove(k);
+            activeKeys.Add(key);
+            _lastSeen[key] = now;
 
-        foreach (var (key, phrase, _) in candidates.OrderBy(c => c.dist)) {
-            if (!_activeObjects.ContainsKey(key)) {
-                _activeObjects[key] = DateTime.Now;
-                _speech.Speak(phrase);
+            bool isMovObj = MovableLabels.Contains(label);
+            string phrase;
+
+            if (manyObjects) {
+                // 2+ objects of any kind → label (+ count) only — no distance noise
+                string displayLabel = count > 1
+                    ? $"{count} {PluralLabel(label)}"
+                    : Capitalise(label);
+                phrase = displayLabel;
+            } else if (distM.HasValue) {
+                // Single object with distance → full detail
+                string dir = DistanceEstimator.GetDirection(rep, frameW);
+                string dist = DistanceEstimator.FormatDistance(distM.Value);
+                phrase = $"{Capitalise(label)} {dir}, {dist}";
+            } else {
+                // Single object, no distance estimate
+                string dir = DistanceEstimator.GetDirection(rep, frameW);
+                phrase = $"{Capitalise(label)} {dir}";
             }
+
+            candidates.Add((key, phrase, sortDist, isMovObj));
         }
+
+        // ── 4. Expire stale keys ─────────────────────────────────────────────────
+        var expired = _lastSeen
+            .Where(kv => (now - kv.Value).TotalMilliseconds > StaleThresholdMs)
+            .Select(kv => kv.Key).ToList();
+        foreach (var k in expired) _lastSeen.Remove(k);
+
+        _speech.PurgeMissing(activeKeys);
+
+        // ── 5. Announce closest-first; movable objects get the priority slot ─────
+        foreach (var (key, phrase, _, isMovObj) in candidates.OrderBy(c => c.dist))
+            _speech.Speak(key, phrase, isMovable: isMovObj);
     }
 
+    // Naive English plural for common COCO labels
+    static string PluralLabel(string label) => label switch {
+        "person" => "people",
+        "bus" => "buses",
+        "bicycle" => "bicycles",
+        "sheep" => "sheep",
+        "deer" => "deer",
+        _ => label + "s"
+    };
+
+    static string Capitalise(string s) =>
+        string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s[1..];
     // ─── Preprocessing ────────────────────────────────────────────────────────
 
-    (float[] tensor, int w, int h) DecodeAndPreprocess(byte[] imgBytes) {
+    (bool ok, int w, int h) DecodeIntoYolo(byte[] imgBytes) {
         const int size = 640;
 
         using var bmp = SKBitmap.Decode(imgBytes);
-        if (bmp == null) return (null, 0, 0);
+        if (bmp == null) return (false, 0, 0);
 
         int origW = bmp.Width;
         int origH = bmp.Height;
 
-        using var rgb = bmp.Copy(SKColorType.Rgb888x);
-        if (rgb == null) return (null, 0, 0);
+        // Decode directly into Rgb888x at target size — one allocation, no intermediate copy
+        var info = new SKImageInfo(size, size, SKColorType.Rgb888x, SKAlphaType.Opaque);
+        using var resized = bmp.Resize(info, SKFilterQuality.Low); // Low = bilinear, ~2× faster than None on ARM
+        if (resized == null) return (false, 0, 0);
 
-        // SKFilterQuality.None is the fastest — negligible accuracy cost at 640px
-        using var resized = rgb.Resize(
-            new SKImageInfo(size, size, SKColorType.Rgb888x),
-            SKFilterQuality.None);
-        if (resized == null) return (null, 0, 0);
-
-        float[] tensor = new float[3 * size * size];
+        // Write directly into the preallocated tensor buffer
+        float[] dst = _yolo.TensorData;
         int planeSize = size * size;
 
         unsafe {
             byte* ptr = (byte*)resized.GetPixels().ToPointer();
             for (int i = 0; i < planeSize; i++) {
-                tensor[0 * planeSize + i] = ptr[i * 4 + 0] / 255f;
-                tensor[1 * planeSize + i] = ptr[i * 4 + 1] / 255f;
-                tensor[2 * planeSize + i] = ptr[i * 4 + 2] / 255f;
+                int px = i * 4;
+                dst[i] = ptr[px] * (1f / 255f);
+                dst[planeSize + i] = ptr[px + 1] * (1f / 255f);
+                dst[planeSize * 2 + i] = ptr[px + 2] * (1f / 255f);
             }
         }
 
-        return (tensor, origW, origH);
+        return (true, origW, origH);
     }
-
     // ─── Overlay Drawing ──────────────────────────────────────────────────────
 
     void OverlayCanvas_PaintSurface(object s, SKPaintSurfaceEventArgs e) {
@@ -304,10 +355,11 @@ public partial class MainPage : ContentPage {
             float? distM = DistanceEstimator.EstimateMetres(det, _lastH);
             if (distM.HasValue) {
                 string dir = DistanceEstimator.GetDirection(det, _lastW);
-                distPart = $" | {dir} {distM.Value:F1}m";
+                distPart = $" | {dir} | {distM.Value:F1}m";
             }
 
-            string label = $"{det.Label}{distPart}  {det.Confidence:P0}";
+            //string label = $"{det.Label}{distPart}  {det.Confidence:P0}";
+            string label = $"{det.Label}{distPart}";
             float tw = textPaint.MeasureText(label);
             float labelY = y > labelH + 4 ? y - labelH : y + h + 2;
 

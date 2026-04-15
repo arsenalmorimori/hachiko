@@ -11,138 +11,174 @@ public class Detection {
 
 public class YoloInferenceService : IDisposable {
     private readonly InferenceSession _session;
+    private readonly string _inputName;
 
     private const int InputSize = 640;
-    private const float ConfThreshold = 0.40f; // YOLOv8 scores are already in [0,1]
+    private const float ConfThreshold = 0.40f;
     private const float NmsThreshold = 0.45f;
-
-    // YOLOv8 layout: [cx, cy, w, h, class0, class1, ...]
-    // NO objectness channel — classes start at index 4
     private const int ClassOffset = 4;
+    private const int NumProposals = 8400;
 
-    private static readonly string[] Labels =
- {
-    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck",
-    "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
-    "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra",
-    "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove",
-    "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup",
-    "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange",
-    "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse",
-    "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
-    "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-    "hair drier", "toothbrush"
-};
+    // ── Preallocated inference buffers (never reallocated after construction) ──
+    private readonly float[] _tensorData;   // 1×3×640×640
+    private readonly DenseTensor<float> _tensor;
+    private readonly List<NamedOnnxValue> _inputList;
+
+    // ── Reusable NMS scratch buffers ──────────────────────────────────────────
+    private readonly float[] _scores = new float[NumProposals];
+    private readonly int[] _classes = new int[NumProposals];
+    private readonly float[] _cx = new float[NumProposals];
+    private readonly float[] _cy = new float[NumProposals];
+    private readonly float[] _bw = new float[NumProposals];
+    private readonly float[] _bh = new float[NumProposals];
+    private readonly int[] _indices = new int[NumProposals];
+    private readonly bool[] _suppressed = new bool[NumProposals];
+
+    private static readonly string[] Labels = {
+        "person","bicycle","car","motorcycle","airplane","bus","train","truck",
+        "boat","traffic light","fire hydrant","stop sign","parking meter","bench",
+        "bird","cat","dog","horse","sheep","cow","elephant","bear","zebra",
+        "giraffe","backpack","umbrella","handbag","tie","suitcase","frisbee",
+        "skis","snowboard","sports ball","kite","baseball bat","baseball glove",
+        "skateboard","surfboard","tennis racket","bottle","wine glass","cup",
+        "fork","knife","spoon","bowl","banana","apple","sandwich","orange",
+        "broccoli","carrot","hot dog","pizza","donut","cake","chair","couch",
+        "potted plant","bed","dining table","toilet","tv","laptop","mouse",
+        "remote","keyboard","cell phone","microwave","oven","toaster","sink",
+        "refrigerator","book","clock","vase","scissors","teddy bear",
+        "hair drier","toothbrush"
+    };
 
     public YoloInferenceService(byte[] modelBytes) {
         var options = new SessionOptions();
         options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+        options.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL; // single-threaded is faster on mobile
+        options.InterOpNumThreads = 1;
+        options.IntraOpNumThreads = 2; // keep 2 for GEMM parallelism
 
 #if ANDROID
         try { options.AppendExecutionProvider_Nnapi(); } catch { }
-#elif IOS
-        try { options.AppendExecutionProvider_CoreML(); } catch { }
 #endif
 
         _session = new InferenceSession(modelBytes, options);
+        _inputName = _session.InputMetadata.Keys.First();
+
+        // Preallocate tensor once — reused every frame
+        int tensorLen = 3 * InputSize * InputSize;
+        _tensorData = new float[tensorLen];
+        _tensor = new DenseTensor<float>(_tensorData, new[] { 1, 3, InputSize, InputSize });
+        _inputList = new List<NamedOnnxValue>(1) {
+            NamedOnnxValue.CreateFromTensor(_inputName, _tensor)
+        };
     }
 
-    public List<Detection> Detect(float[] input, int origW, int origH) {
-        var tensor = new DenseTensor<float>(input, new[] { 1, 3, InputSize, InputSize });
+    // ── Public: fills _tensorData in-place, caller must not touch it concurrently ──
 
-        using var results = _session.Run(new List<NamedOnnxValue>
-        {
-            NamedOnnxValue.CreateFromTensor("images", tensor)
-        });
-
+    public List<Detection> Detect(int origW, int origH) {
+        // _tensorData already filled by the caller (DecodeAndPreprocess writes directly into it)
+        using var results = _session.Run(_inputList);
         var output = results.First().AsTensor<float>();
         return ParseOutput(output, origW, origH);
     }
 
-    private List<Detection> ParseOutput(Tensor<float> output, int origW, int origH) {
-        var dims = output.Dimensions.ToArray();
+    // ── ParseOutput: zero LINQ, zero heap allocs in hot path ─────────────────
 
-        // YOLOv8 standard ONNX export shape: [1, 84, 8400]
-        // dim1 = attributes (4 box + N classes), dim2 = proposals
-        int dim1 = dims[1];
-        int dim2 = dims[2];
-
-        bool isCHW = dim1 < dim2; // true = [1, attrs, proposals]
-
+    private List<Detection> ParseOutput(Tensor<float> t, int origW, int origH) {
+        var dims = t.Dimensions.ToArray();
+        int dim1 = dims[1], dim2 = dims[2];
+        bool isCHW = dim1 < dim2;
         int numDet = isCHW ? dim2 : dim1;
         int numAttr = isCHW ? dim1 : dim2;
 
         float scaleX = (float)origW / InputSize;
         float scaleY = (float)origH / InputSize;
+        int numClasses = numAttr - ClassOffset;
 
-        var boxes = new List<Detection>();
-
+        // Pass 1: score every proposal, fill flat scratch arrays
+        int candidateCount = 0;
         for (int i = 0; i < numDet; i++) {
-            // Box coords — already in pixel space at InputSize scale
-            float cx = isCHW ? output[0, 0, i] : output[0, i, 0];
-            float cy = isCHW ? output[0, 1, i] : output[0, i, 1];
-            float w = isCHW ? output[0, 2, i] : output[0, i, 2];
-            float h = isCHW ? output[0, 3, i] : output[0, i, 3];
-
-            // Class scores — already sigmoid-activated by the model export
-            // DO NOT apply sigmoid again — that causes everything to collapse to ~0.5
             float bestScore = 0f;
             int bestClass = 0;
-
-            for (int c = ClassOffset; c < numAttr; c++) {
-                float score = isCHW ? output[0, c, i] : output[0, i, c];
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestClass = c - ClassOffset;
-                }
+            for (int c = 0; c < numClasses; c++) {
+                float s = isCHW ? t[0, c + ClassOffset, i] : t[0, i, c + ClassOffset];
+                if (s > bestScore) { bestScore = s; bestClass = c; }
             }
-
             if (bestScore < ConfThreshold) continue;
 
-            boxes.Add(new Detection {
-                X = (cx - w / 2f) * scaleX,
-                Y = (cy - h / 2f) * scaleY,
-                Width = w * scaleX,
-                Height = h * scaleY,
-                Confidence = bestScore,
-                ClassId = bestClass,
-                Label = bestClass < Labels.Length ? Labels[bestClass] : $"cls{bestClass}"
-            });
+            _scores[candidateCount] = bestScore;
+            _classes[candidateCount] = bestClass;
+            _cx[candidateCount] = isCHW ? t[0, 0, i] : t[0, i, 0];
+            _cy[candidateCount] = isCHW ? t[0, 1, i] : t[0, i, 1];
+            _bw[candidateCount] = isCHW ? t[0, 2, i] : t[0, i, 2];
+            _bh[candidateCount] = isCHW ? t[0, 3, i] : t[0, i, 3];
+            _indices[candidateCount] = candidateCount;
+            candidateCount++;
         }
 
-        return ApplyNms(boxes);
-    }
+        // Pass 2: sort indices descending by score (insertion sort is fast for small N)
+        InsertionSortDesc(_indices, _scores, candidateCount);
 
-    private List<Detection> ApplyNms(List<Detection> dets) {
-        var result = new List<Detection>();
-        foreach (var group in dets.GroupBy(d => d.ClassId)) {
-            var sorted = group.OrderByDescending(d => d.Confidence).ToList();
-            var removed = new bool[sorted.Count];
-            for (int i = 0; i < sorted.Count; i++) {
-                if (removed[i]) continue;
-                result.Add(sorted[i]);
-                for (int j = i + 1; j < sorted.Count; j++)
-                    if (!removed[j] && IoU(sorted[i], sorted[j]) > NmsThreshold)
-                        removed[j] = true;
+        // Pass 3: class-aware NMS over sorted indices
+        Array.Clear(_suppressed, 0, candidateCount);
+        var result = new List<Detection>(candidateCount);
+
+        for (int a = 0; a < candidateCount; a++) {
+            int i = _indices[a];
+            if (_suppressed[i]) continue;
+
+            float ax = (_cx[i] - _bw[i] / 2f) * scaleX;
+            float ay = (_cy[i] - _bh[i] / 2f) * scaleY;
+            float aw = _bw[i] * scaleX;
+            float ah = _bh[i] * scaleY;
+
+            result.Add(new Detection {
+                X = ax, Y = ay, Width = aw, Height = ah,
+                Confidence = _scores[i],
+                ClassId = _classes[i],
+                Label = _classes[i] < Labels.Length ? Labels[_classes[i]] : $"cls{_classes[i]}"
+            });
+
+            for (int b = a + 1; b < candidateCount; b++) {
+                int j = _indices[b];
+                if (_suppressed[j] || _classes[j] != _classes[i]) continue;
+
+                float bx = (_cx[j] - _bw[j] / 2f) * scaleX;
+                float by = (_cy[j] - _bh[j] / 2f) * scaleY;
+                float bw = _bw[j] * scaleX;
+                float bhh = _bh[j] * scaleY;
+
+                if (IoU(ax, ay, aw, ah, bx, by, bw, bhh) > NmsThreshold)
+                    _suppressed[j] = true;
             }
         }
+
         return result;
     }
 
-    private static float IoU(Detection a, Detection b) {
-        float x1 = Math.Max(a.X, b.X);
-        float y1 = Math.Max(a.Y, b.Y);
-        float x2 = Math.Min(a.X + a.Width, b.X + b.Width);
-        float y2 = Math.Min(a.Y + a.Height, b.Y + b.Height);
+    private static void InsertionSortDesc(int[] idx, float[] scores, int n) {
+        for (int i = 1; i < n; i++) {
+            int key = idx[i];
+            float keyScore = scores[key];
+            int j = i - 1;
+            while (j >= 0 && scores[idx[j]] < keyScore) {
+                idx[j + 1] = idx[j];
+                j--;
+            }
+            idx[j + 1] = key;
+        }
+    }
 
-        float inter = Math.Max(0f, x2 - x1) * Math.Max(0f, y2 - y1);
-        float union = a.Width * a.Height + b.Width * b.Height - inter;
-
+    private static float IoU(float ax, float ay, float aw, float ah,
+                              float bx, float by, float bw, float bh) {
+        float x1 = MathF.Max(ax, bx), y1 = MathF.Max(ay, by);
+        float x2 = MathF.Min(ax + aw, bx + bw);
+        float y2 = MathF.Min(ay + ah, by + bh);
+        float inter = MathF.Max(0f, x2 - x1) * MathF.Max(0f, y2 - y1);
+        float union = aw * ah + bw * bh - inter;
         return union <= 0f ? 0f : inter / union;
     }
+
+    public float[] TensorData => _tensorData; // caller writes directly here
 
     public void Dispose() => _session.Dispose();
 }
