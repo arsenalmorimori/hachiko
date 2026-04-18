@@ -3,12 +3,16 @@
   "WorkspaceRootPath": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{0F3FAB4C-02AC-4291-8F2C-6642BC3BCA07}|Hachiko\\Hachiko.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\hachiko_early\\hachiko\\yoloinferenceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0F3FAB4C-02AC-4291-8F2C-6642BC3BCA07}|Hachiko\\Hachiko.csproj|solutionrelative:hachiko\\yoloinferenceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0F3FAB4C-02AC-4291-8F2C-6642BC3BCA07}|Hachiko\\Hachiko.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\hachiko_early\\hachiko\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{0F3FAB4C-02AC-4291-8F2C-6642BC3BCA07}|Hachiko\\Hachiko.csproj|solutionrelative:hachiko\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{0F3FAB4C-02AC-4291-8F2C-6642BC3BCA07}|Hachiko\\Hachiko.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\hachiko_early\\hachiko\\mainpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -30,7 +34,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 283,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -39,19 +43,32 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "MainPage.xaml",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\MainPage.xaml",
+              "RelativeDocumentMoniker": "Hachiko\\MainPage.xaml",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\MainPage.xaml",
+              "RelativeToolTip": "Hachiko\\MainPage.xaml",
+              "ViewState": "AgIAABgAAAAAAAAAAAAowCMAAAA7AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-15T17:39:35.972Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
               "Title": "YoloInferenceService.cs",
               "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\YoloInferenceService.cs",
               "RelativeDocumentMoniker": "Hachiko\\YoloInferenceService.cs",
               "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\YoloInferenceService.cs",
               "RelativeToolTip": "Hachiko\\YoloInferenceService.cs",
-              "ViewState": "AgIAADAAAAAAAAAAAAAAwDsAAABCAAAAAAAAAA==",
+              "ViewState": "AgIAAI0AAAAAAAAAAAAowJ8AAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-15T14:27:42.428Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "Distanceestimator.cs",
               "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\Distanceestimator.cs",
               "RelativeDocumentMoniker": "Hachiko\\Distanceestimator.cs",
@@ -59,12 +76,11 @@
               "RelativeToolTip": "Hachiko\\Distanceestimator.cs",
               "ViewState": "AgIAAEQAAAAAAAAAAAAgwGEAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T14:06:41.778Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-15T14:06:41.778Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "AndroidManifest.xml",
               "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml",
               "RelativeDocumentMoniker": "Hachiko\\obj\\Debug\\net9.0-android\\AndroidManifest.xml",
@@ -77,7 +93,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Speechqueue.cs",
               "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\Speechqueue.cs",
               "RelativeDocumentMoniker": "Hachiko\\Speechqueue.cs",
@@ -85,12 +101,11 @@
               "RelativeToolTip": "Hachiko\\Speechqueue.cs",
               "ViewState": "AgIAAEoAAAAAAAAAAAAuwGsAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T13:56:10.108Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-15T13:56:10.108Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "MainPage.xaml.cs",
               "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\Hachiko_early\\Hachiko\\MainPage.xaml.cs",
               "RelativeDocumentMoniker": "Hachiko\\MainPage.xaml.cs",
@@ -98,8 +113,7 @@
               "RelativeToolTip": "Hachiko\\MainPage.xaml.cs",
               "ViewState": "AgIAAH4AAAAAAAAAAAAIwJMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T13:54:15.578Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-15T13:54:15.578Z"
             }
           ]
         },

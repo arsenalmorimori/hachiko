@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LlavaVision.MainPage"
+             BackgroundColor="#0D0D0F">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="24,48,24,32">
+
+            <!-- Header -->
+            <Label Text="👁  LLAVA VISION"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="#E8E8E8"
+                   CharacterSpacing="4"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,4"/>
+
+            <Label Text="offline · on-device AI"
+                   FontSize="11"
+                   TextColor="#555566"
+                   CharacterSpacing="2"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,36"/>
+
+            <!-- Camera Button -->
+            <Button x:Name="CameraButton"
+                    Text="📷  CAPTURE IMAGE"
+                    Clicked="OnCameraClicked"
+                    BackgroundColor="#1A1A2E"
+                    TextColor="#A78BFA"
+                    FontAttributes="Bold"
+                    FontSize="15"
+                    CharacterSpacing="2"
+                    CornerRadius="14"
+                    HeightRequest="58"
+                    Margin="0,0,0,28"
+                    BorderColor="#2D2D4E"
+                    BorderWidth="1.5"/>
+
+            <!-- Image Preview Card -->
+            <Border x:Name="ImageCard"
+                    IsVisible="False"
+                    BackgroundColor="#12121C"
+                    Stroke="#2A2A3E"
+                    StrokeThickness="1"
+                    Margin="0,0,0,20">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16"/>
+                </Border.StrokeShape>
+                <Image x:Name="PreviewImage"
+                       HeightRequest="260"
+                       Aspect="AspectFit"
+                       Margin="12"/>
+            </Border>
+
+            <!-- Status / Loading -->
+            <HorizontalStackLayout x:Name="StatusRow"
+                                   IsVisible="False"
+                                   HorizontalOptions="Center"
+                                   Spacing="10"
+                                   Margin="0,0,0,20">
+                <ActivityIndicator x:Name="Spinner"
+                                   IsRunning="True"
+                                   Color="#A78BFA"
+                                   HeightRequest="20"
+                                   WidthRequest="20"/>
+                <Label x:Name="StatusLabel"
+                       Text="Analyzing image..."
+                       TextColor="#888899"
+                       FontSize="13"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <!-- Result Card -->
+            <Border x:Name="ResultCard"
+                    IsVisible="False"
+                    BackgroundColor="#0F0F1A"
+                    Stroke="#2A2A3E"
+                    StrokeThickness="1">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Padding="20,16" Spacing="10">
+                    <Label Text="AI ANALYSIS"
+                           FontSize="10"
+                           FontAttributes="Bold"
+                           TextColor="#A78BFA"
+                           CharacterSpacing="3"/>
+                    <BoxView HeightRequest="1"
+                             BackgroundColor="#2A2A3E"
+                             Margin="0,0,0,4"/>
+                    <Label x:Name="ResultLabel"
+                           Text=""
+                           TextColor="#D4D4E8"
+                           FontSize="14"
+                           LineHeight="1.6"/>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

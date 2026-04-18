@@ -3,28 +3,32 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace Hachiko;
 
+// OBJECT PER OBJECT DETECTED
 public class Detection {
     public float X, Y, Width, Height, Confidence;
     public int ClassId;
     public string Label;
 }
 
+
+//HANDLER FOR YOLO ONNX PROCESS
 public class YoloInferenceService : IDisposable {
     private readonly InferenceSession _session;
     private readonly string _inputName;
 
+    //YOLO CONFIGS
     private const int InputSize = 640;
-    private const float ConfThreshold = 0.40f;
-    private const float NmsThreshold = 0.45f;
+    private const float ConfThreshold = 0.60f; // Confidence level minimum
+    private const float NmsThreshold = 0.45f; // for overlap
     private const int ClassOffset = 4;
     private const int NumProposals = 8400;
 
-    // ── Preallocated inference buffers (never reallocated after construction) ──
+    // RAW OBEJCT DETECTED DATA OF TENSOR/YOLO
     private readonly float[] _tensorData;   // 1×3×640×640
     private readonly DenseTensor<float> _tensor;
     private readonly List<NamedOnnxValue> _inputList;
 
-    // ── Reusable NMS scratch buffers ──────────────────────────────────────────
+    // REUSABLE MEMORY
     private readonly float[] _scores = new float[NumProposals];
     private readonly int[] _classes = new int[NumProposals];
     private readonly float[] _cx = new float[NumProposals];
@@ -34,6 +38,7 @@ public class YoloInferenceService : IDisposable {
     private readonly int[] _indices = new int[NumProposals];
     private readonly bool[] _suppressed = new bool[NumProposals];
 
+    // COCO DATASET 80 CLASS LABEL
     private static readonly string[] Labels = {
         "person","bicycle","car","motorcycle","airplane","bus","train","truck",
         "boat","traffic light","fire hydrant","stop sign","parking meter","bench",
