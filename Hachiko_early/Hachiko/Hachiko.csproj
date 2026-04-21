@@ -64,7 +64,7 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	
 		<!-- //////////////////////////////// -->
-		<MauiAsset Include="Resources\Raw\yolov8s.onnx" />
+		<MauiAsset Include="Resources\Raw\hachiko_1.onnx" />
 	</ItemGroup>
 
 	<ItemGroup>

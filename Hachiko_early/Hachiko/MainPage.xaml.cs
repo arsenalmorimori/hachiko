@@ -40,7 +40,7 @@ public partial class MainPage : ContentPage {
 
     async void LoadModel() {
         try {
-            using var stream = await FileSystem.OpenAppPackageFileAsync("yolov8s.onnx");
+            using var stream = await FileSystem.OpenAppPackageFileAsync("hachiko_1.onnx");
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             _yolo = new YoloInferenceService(ms.ToArray());

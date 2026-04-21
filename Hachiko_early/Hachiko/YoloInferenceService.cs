@@ -38,22 +38,15 @@ public class YoloInferenceService : IDisposable {
     private readonly int[] _indices = new int[NumProposals];
     private readonly bool[] _suppressed = new bool[NumProposals];
 
-    // COCO DATASET 80 CLASS LABEL
+    // hachiko_1 model onnx
     private static readonly string[] Labels = {
-        "person","bicycle","car","motorcycle","airplane","bus","train","truck",
-        "boat","traffic light","fire hydrant","stop sign","parking meter","bench",
-        "bird","cat","dog","horse","sheep","cow","elephant","bear","zebra",
-        "giraffe","backpack","umbrella","handbag","tie","suitcase","frisbee",
-        "skis","snowboard","sports ball","kite","baseball bat","baseball glove",
-        "skateboard","surfboard","tennis racket","bottle","wine glass","cup",
-        "fork","knife","spoon","bowl","banana","apple","sandwich","orange",
-        "broccoli","carrot","hot dog","pizza","donut","cake","chair","couch",
-        "potted plant","bed","dining table","toilet","tv","laptop","mouse",
-        "remote","keyboard","cell phone","microwave","oven","toaster","sink",
-        "refrigerator","book","clock","vase","scissors","teddy bear",
-        "hair drier","toothbrush"
-    };
-
+    "airplane","apple","backpack","banana","bed","bench","bicycle","boat","book","bottle",
+    "bowl","broccoli","bus","cake","car","carrot","cat","cell phone","chair","clock",
+    "couch","cup","dining table","dog","donut","fire hydrant","fork","handbag","hot dog","keyboard",
+    "kite","knife","laptop","microwave","motorcycle","mouse","orange","oven","parking meter","person",
+    "pizza","potted plant","refrigerator","remote","sandwich","scissors","sink","spoon","stop sign","teddy bear",
+    "toaster","toilet","toothbrush","traffic light","train","truck","tv","umbrella"
+};
     public YoloInferenceService(byte[] modelBytes) {
         var options = new SessionOptions();
         options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
