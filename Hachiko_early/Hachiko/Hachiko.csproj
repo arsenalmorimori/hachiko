@@ -62,19 +62,25 @@
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	
 		<!-- //////////////////////////////// -->
-		<MauiAsset Include="Resources\Raw\hachiko_1.onnx" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
 		<PackageReference Include="Camera.MAUI" Version="1.*" />
-		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.4" />
+
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.20.1" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.1" />
+
 		<PackageReference Include="SkiaSharp" Version="3.119.2" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.2" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Core" Version="3.119.2" />
 	</ItemGroup>
+
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+		<AndroidLinkMode>SdkOnly</AndroidLinkMode>
+	</PropertyGroup>
 
 </Project>

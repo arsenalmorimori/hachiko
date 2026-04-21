@@ -10,25 +10,24 @@ public class Detection {
     public string Label;
 }
 
-
-//HANDLER FOR YOLO ONNX PROCESS
+// HANDLER FOR YOLO ONNX PROCESS
 public class YoloInferenceService : IDisposable {
     private readonly InferenceSession _session;
     private readonly string _inputName;
 
-    //YOLO CONFIGS
-    private const int InputSize = 640;
-    private const float ConfThreshold = 0.60f; // Confidence level minimum
-    private const float NmsThreshold = 0.45f; // for overlap
+    // YOLO CONFIGS — change InputSize here and everything else follows
+    public const int InputSize = 320;
+    private const int NumProposals = 2100;   // 320×320 → 2100 proposals
+    private const float ConfThreshold = 0.60f;
+    private const float NmsThreshold = 0.45f;
     private const int ClassOffset = 4;
-    private const int NumProposals = 8400;
 
-    // RAW OBEJCT DETECTED DATA OF TENSOR/YOLO
-    private readonly float[] _tensorData;   // 1×3×640×640
+    // Preallocated tensor buffer — reused every frame
+    private readonly float[] _tensorData;
     private readonly DenseTensor<float> _tensor;
     private readonly List<NamedOnnxValue> _inputList;
 
-    // REUSABLE MEMORY
+    // Reusable scratch arrays — sized to NumProposals
     private readonly float[] _scores = new float[NumProposals];
     private readonly int[] _classes = new int[NumProposals];
     private readonly float[] _cx = new float[NumProposals];
@@ -38,30 +37,39 @@ public class YoloInferenceService : IDisposable {
     private readonly int[] _indices = new int[NumProposals];
     private readonly bool[] _suppressed = new bool[NumProposals];
 
-    // hachiko_1 model onnx
+    // COCO labels for hachiko_1 model
     private static readonly string[] Labels = {
-    "airplane","apple","backpack","banana","bed","bench","bicycle","boat","book","bottle",
-    "bowl","broccoli","bus","cake","car","carrot","cat","cell phone","chair","clock",
-    "couch","cup","dining table","dog","donut","fire hydrant","fork","handbag","hot dog","keyboard",
-    "kite","knife","laptop","microwave","motorcycle","mouse","orange","oven","parking meter","person",
-    "pizza","potted plant","refrigerator","remote","sandwich","scissors","sink","spoon","stop sign","teddy bear",
-    "toaster","toilet","toothbrush","traffic light","train","truck","tv","umbrella"
-};
+        "airplane","apple","backpack","banana","bed","bench","bicycle","boat","book","bottle",
+        "bowl","broccoli","bus","cake","car","carrot","cat","cell phone","chair","clock",
+        "couch","cup","dining table","dog","donut","fire hydrant","fork","handbag","hot dog","keyboard",
+        "kite","knife","laptop","microwave","motorcycle","mouse","orange","oven","parking meter","person",
+        "pizza","potted plant","refrigerator","remote","sandwich","scissors","sink","spoon","stop sign","teddy bear",
+        "toaster","toilet","toothbrush","traffic light","train","truck","tv","umbrella"
+    };
+
     public YoloInferenceService(byte[] modelBytes) {
         var options = new SessionOptions();
         options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-        options.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL; // single-threaded is faster on mobile
+        options.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
         options.InterOpNumThreads = 1;
-        options.IntraOpNumThreads = 2; // keep 2 for GEMM parallelism
+        options.IntraOpNumThreads = 2;
 
 #if ANDROID
-        try { options.AppendExecutionProvider_Nnapi(); } catch { }
+        try {
+            options.AppendExecutionProvider_Nnapi();
+            System.Diagnostics.Debug.WriteLine("[YOLO] NNAPI enabled");
+        } catch (Exception ex) {
+            System.Diagnostics.Debug.WriteLine($"[YOLO] NNAPI failed: {ex.Message}");
+        }
 #endif
 
         _session = new InferenceSession(modelBytes, options);
         _inputName = _session.InputMetadata.Keys.First();
 
-        // Preallocate tensor once — reused every frame
+        // Log actual model output shape so we can verify NumProposals
+        System.Diagnostics.Debug.WriteLine(
+            $"[YOLO] Input: {_inputName}, InputSize constant: {InputSize}");
+
         int tensorLen = 3 * InputSize * InputSize;
         _tensorData = new float[tensorLen];
         _tensor = new DenseTensor<float>(_tensorData, new[] { 1, 3, InputSize, InputSize });
@@ -70,29 +78,43 @@ public class YoloInferenceService : IDisposable {
         };
     }
 
-    // ── Public: fills _tensorData in-place, caller must not touch it concurrently ──
+    // Caller fills TensorData directly, then calls Detect()
+    public float[] TensorData => _tensorData;
 
     public List<Detection> Detect(int origW, int origH) {
-        // _tensorData already filled by the caller (DecodeAndPreprocess writes directly into it)
         using var results = _session.Run(_inputList);
         var output = results.First().AsTensor<float>();
+
+        // Log output shape once to verify model matches NumProposals
+        var dims = output.Dimensions.ToArray();
+        System.Diagnostics.Debug.WriteLine(
+            $"[YOLO] Output dims: [{string.Join(", ", dims.ToArray())}]");
+
         return ParseOutput(output, origW, origH);
     }
-
-    // ── ParseOutput: zero LINQ, zero heap allocs in hot path ─────────────────
 
     private List<Detection> ParseOutput(Tensor<float> t, int origW, int origH) {
         var dims = t.Dimensions.ToArray();
         int dim1 = dims[1], dim2 = dims[2];
+
+        // YOLOv8 exports as [1, 84, 2100] (CHW) or [1, 2100, 84] (HWC)
         bool isCHW = dim1 < dim2;
         int numDet = isCHW ? dim2 : dim1;
         int numAttr = isCHW ? dim1 : dim2;
+        int numClasses = numAttr - ClassOffset;
 
         float scaleX = (float)origW / InputSize;
         float scaleY = (float)origH / InputSize;
-        int numClasses = numAttr - ClassOffset;
 
-        // Pass 1: score every proposal, fill flat scratch arrays
+        // Guard: if model still outputs 8400, scratch arrays are too small
+        if (numDet > NumProposals) {
+            System.Diagnostics.Debug.WriteLine(
+                $"[YOLO] WARNING: model outputs {numDet} proposals but NumProposals={NumProposals}. " +
+                "Re-export at imgsz=320 or increase NumProposals to 8400.");
+            numDet = NumProposals; // clamp to avoid out-of-bounds
+        }
+
+        // Pass 1: filter by confidence, fill scratch arrays
         int candidateCount = 0;
         for (int i = 0; i < numDet; i++) {
             float bestScore = 0f;
@@ -113,10 +135,10 @@ public class YoloInferenceService : IDisposable {
             candidateCount++;
         }
 
-        // Pass 2: sort indices descending by score (insertion sort is fast for small N)
+        // Pass 2: sort descending by score
         InsertionSortDesc(_indices, _scores, candidateCount);
 
-        // Pass 3: class-aware NMS over sorted indices
+        // Pass 3: class-aware NMS
         Array.Clear(_suppressed, 0, candidateCount);
         var result = new List<Detection>(candidateCount);
 
@@ -175,8 +197,6 @@ public class YoloInferenceService : IDisposable {
         float union = aw * ah + bw * bh - inter;
         return union <= 0f ? 0f : inter / union;
     }
-
-    public float[] TensorData => _tensorData; // caller writes directly here
 
     public void Dispose() => _session.Dispose();
 }
