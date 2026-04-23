@@ -1,14 +1,26 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Programming_HeavyLoad\\MAUI\\LlavaVision\\",
+  "WorkspaceRootPath": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\llavavision\\llavavision\\mainpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\mainpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\llava_mode_early\\llavavision\\appshell.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\appshell.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\llavavision\\llavavision\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\llava_mode_early\\llavavision\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\llava_mode_early\\llavavision\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\llava_mode_early\\llavavision\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|d:\\programming_heavyload\\maui\\hachiko_git\\llava_mode_early\\llavavision\\mainpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{105D77E9-D7DD-48F4-8BFE-28B0C1E8E9E2}|LlavaVision\\LlavaVision.csproj|solutionrelative:llavavision\\mainpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 283,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,11 +38,50 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MauiProgram.cs",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MauiProgram.cs",
+              "RelativeDocumentMoniker": "LlavaVision\\MauiProgram.cs",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MauiProgram.cs",
+              "RelativeToolTip": "LlavaVision\\MauiProgram.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAA5wAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-23T04:08:17.894Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "App.xaml",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\App.xaml",
+              "RelativeDocumentMoniker": "LlavaVision\\App.xaml",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\App.xaml",
+              "RelativeToolTip": "LlavaVision\\App.xaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-23T04:08:14.047Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AppShell.xaml",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\AppShell.xaml",
+              "RelativeDocumentMoniker": "LlavaVision\\AppShell.xaml",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\AppShell.xaml",
+              "RelativeToolTip": "LlavaVision\\AppShell.xaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-23T04:08:11.563Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "MainPage.xaml",
-              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\LlavaVision\\LlavaVision\\MainPage.xaml",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MainPage.xaml",
               "RelativeDocumentMoniker": "LlavaVision\\MainPage.xaml",
-              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\LlavaVision\\LlavaVision\\MainPage.xaml",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MainPage.xaml",
               "RelativeToolTip": "LlavaVision\\MainPage.xaml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
@@ -39,11 +90,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 4,
               "Title": "MainPage.xaml.cs",
-              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\LlavaVision\\LlavaVision\\MainPage.xaml.cs",
+              "DocumentMoniker": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MainPage.xaml.cs",
               "RelativeDocumentMoniker": "LlavaVision\\MainPage.xaml.cs",
-              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\LlavaVision\\LlavaVision\\MainPage.xaml.cs",
+              "ToolTip": "D:\\Programming_HeavyLoad\\MAUI\\hachiko_git\\llava_mode_early\\LlavaVision\\MainPage.xaml.cs",
               "RelativeToolTip": "LlavaVision\\MainPage.xaml.cs",
               "ViewState": "AgIAAAMAAAAAAAAAAAAAAAsAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",

@@ -42,7 +42,7 @@ public partial class MainPage : ContentPage {
     // ── Model Loading ─────────────────────────────────────────────────────────
     async void LoadModel() {
         try {
-            using var stream = await FileSystem.OpenAppPackageFileAsync("hachiko_1.onnx");
+            using var stream = await FileSystem.OpenAppPackageFileAsync("hachiko_2.onnx");
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             _yolo = new YoloInferenceService(ms.ToArray());
@@ -310,9 +310,9 @@ public partial class MainPage : ContentPage {
         float scaleX = (float)e.Info.Width / _lastW;
         float scaleY = (float)e.Info.Height / _lastH;
 
-        float fontSize = e.Info.Width * 0.03f;
-        float boxStroke = e.Info.Width * 0.004f;
-        float labelH = fontSize + 12f;
+        float fontSize = e.Info.Width * 0.02f;
+        float boxStroke = e.Info.Width * 0.002f;
+        float labelH = fontSize + 9f;
 
         using var boxPaint = new SKPaint {
             Color = new SKColor(0x55, 0x55, 0xff),

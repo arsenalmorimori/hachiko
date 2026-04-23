@@ -5,7 +5,7 @@
              xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
              x:Class="Hachiko.MainPage"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#fefefe">
+             BackgroundColor="#2a2a2a">
 
     <!-- Landscape: camera left (65%), controls right (35%) -->
     <Grid ColumnDefinitions="*,Auto"
@@ -60,23 +60,23 @@
             <!-- STATS  -->
             <Grid RowDefinitions="*,*" RowSpacing="1">
 
-                <Border Grid.Row="0" Padding="8,6" BackgroundColor="#f0f0f0" StrokeThickness="0" Margin="0,0,20,0">
+                <Border Grid.Row="0" Padding="8,6" BackgroundColor="#2a2a2a" StrokeThickness="0" Margin="0,0,20,0">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="6"/>
                     </Border.StrokeShape>
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                        <Label Text="FPS" TextColor="#545454" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        <Label x:Name="FpsLabel" Text="--" TextColor="#2a2a2a" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Label Text="FPS" TextColor="#f0f0f0" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        <Label x:Name="FpsLabel" Text="--" TextColor="#f0f0f0" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
                     </HorizontalStackLayout>
                 </Border>
-                
-                <Border Grid.Row="1" Padding="8,6" BackgroundColor="#f0f0f0" StrokeThickness="0">
+
+                <Border Grid.Row="1" Padding="8,6" BackgroundColor="#2a2a2a" StrokeThickness="0">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="6"/>
                     </Border.StrokeShape>
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                        <Label Text="OBJ" TextColor="#545454" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        <Label x:Name="ObjLabel" Text="0" TextColor="#2a2a2a" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        <Label Text="OBJ" TextColor="#f0f0f0" FontSize="14" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        <Label x:Name="ObjLabel" Text="0" TextColor="#f0f0f0" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
 
                     </HorizontalStackLayout>
                 </Border>

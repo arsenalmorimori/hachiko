@@ -1,0 +1,69 @@
+# ================================
+# Build outputs
+# ================================
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# ================================
+# Visual Studio / Rider / VS Code
+# ================================
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ================================
+# .NET / NuGet
+# ================================
+*.nupkg
+.nuget/
+packages/
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+# ================================
+# MAUI / Android / iOS / MacCatalyst
+# ================================
+Platforms/Android/local.properties
+*.apk
+*.aab
+*.ipa
+*.dSYM/
+*.maui/
+
+# Android build artifacts
+android/
+**/bin/Release/
+**/bin/Debug/
+**/obj/Release/
+**/obj/Debug/
+
+# iOS / Mac build artifacts
+ios/
+macos/
+
+# ================================
+# User secrets / sensitive
+# ================================
+secrets.json
+appsettings.Development.json
+
+# ================================
+# Logs
+# ================================
+*.log
+log.txt
+
+# ================================
+# OS files
+# ================================
+.DS_Store
+Thumbs.db

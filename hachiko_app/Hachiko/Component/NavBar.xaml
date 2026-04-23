@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Hachiko.Component.NavBar"
+             BackgroundColor="Transparent"
+             HorizontalOptions="Center"
+             VerticalOptions="End">
+
+
+    <HorizontalStackLayout
+        Spacing="10"
+        VerticalOptions="Center"
+        HorizontalOptions="Center">
+
+        <!-- LEFT COLUMN -->
+        <Frame BackgroundColor="{StaticResource Tertiary}"
+               CornerRadius="25"
+               BorderColor="Transparent"
+               HeightRequest="70"
+               WidthRequest="70"
+               HorizontalOptions="Center"
+               VerticalOptions="End"
+               Margin="0,0,0,20"
+               HasShadow="True">
+
+            <Frame.Shadow>
+                <Shadow Brush="#000000"
+                    Offset="-3,7"
+                    Radius="10"
+                    Opacity="0.17" />
+            </Frame.Shadow>
+
+            <ImageButton 
+                Source="outline.png" 
+                HeightRequest="70"
+                WidthRequest="70"/>
+        </Frame>
+
+
+
+
+        <!-- RIGHT COLUMN-->
+        <Frame BackgroundColor="{StaticResource White}"
+               CornerRadius="25"
+               BorderColor="Transparent"
+               Padding="8"
+               HorizontalOptions="Center"
+               VerticalOptions="End"
+               Margin="0,0,0,20"
+               HasShadow="True">
+
+            <Frame.Shadow>
+                <Shadow Brush="#000000"
+                    Offset="-3,7"
+                    Radius="10"
+                    Opacity="0.17"/>
+            </Frame.Shadow>
+
+            <HorizontalStackLayout Spacing="0">
+
+                <!-- HOME -->
+                <Frame
+                    x:Name="HomeFrame"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    Padding="25,9"
+                    CornerRadius="20">
+                    <ImageButton 
+                        x:Name="HomeIcon"
+                        Source="home_in_ico.png"
+                        Clicked="Home_Clicked" 
+                        HeightRequest="30"
+                        WidthRequest="30"
+                        MinimumHeightRequest="0"
+                        MinimumWidthRequest="0"/>
+                </Frame>
+
+
+                <!-- OBJECT -->
+                <Frame
+                    x:Name="ObjectFrame"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    Padding="25,9"
+                    CornerRadius="20">
+                    <ImageButton 
+                        x:Name="ObjectIcon"
+                        Source="obj_in_ico.png"  
+                        HeightRequest="30"
+                        WidthRequest="30"
+                        MinimumHeightRequest="0"
+                        MinimumWidthRequest="0"
+                        Clicked="Object_Clicked"
+                                 />
+                </Frame>
+
+
+                <!-- SMART -->
+                <Frame
+                    x:Name="SmartFrame"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    Padding="25,9"
+                    CornerRadius="20">
+                    <ImageButton 
+                        x:Name="SmartIcon"
+                        Source="smart_in_ico.png"  
+                        HeightRequest="30"
+                        WidthRequest="30"
+                        MinimumHeightRequest="0"
+                        MinimumWidthRequest="0"
+                        Clicked="Smart_Clicked"/>
+                </Frame>
+
+            </HorizontalStackLayout>
+        </Frame>
+
+    
+    </HorizontalStackLayout>
+</ContentView>

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:comp="clr-namespace:Hachiko.Component"
+             x:Class="Hachiko.MainPage"
+             BackgroundColor="{StaticResource White}"
+              Padding="0">
+
+    <Grid>
+        <ContentView x:Name="PageHost">
+            <ContentView.GestureRecognizers>
+                <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeLeft"/>
+                <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipeRight"/>
+            </ContentView.GestureRecognizers>
+        </ContentView>
+
+        <!-- FLOATING NAV BAR -->
+        <comp:NavBar
+            x:Name="NavBarRef"
+            VerticalOptions="End"
+            HorizontalOptions="Fill"/>
+    </Grid>
+    
+</ContentPage>

@@ -18,7 +18,7 @@ public class YoloInferenceService : IDisposable {
     // YOLO CONFIGS — change InputSize here and everything else follows
     public const int InputSize = 320;
     private const int NumProposals = 2100;   // 320×320 → 2100 proposals
-    private const float ConfThreshold = 0.60f;
+    private const float ConfThreshold = 0.75f;
     private const float NmsThreshold = 0.45f;
     private const int ClassOffset = 4;
 
@@ -39,13 +39,11 @@ public class YoloInferenceService : IDisposable {
 
     // COCO labels for hachiko_1 model
     private static readonly string[] Labels = {
-        "airplane","apple","backpack","banana","bed","bench","bicycle","boat","book","bottle",
-        "bowl","broccoli","bus","cake","car","carrot","cat","cell phone","chair","clock",
-        "couch","cup","dining table","dog","donut","fire hydrant","fork","handbag","hot dog","keyboard",
-        "kite","knife","laptop","microwave","motorcycle","mouse","orange","oven","parking meter","person",
-        "pizza","potted plant","refrigerator","remote","sandwich","scissors","sink","spoon","stop sign","teddy bear",
-        "toaster","toilet","toothbrush","traffic light","train","truck","tv","umbrella"
+        "1", "10", "100", "1000", "20", "200", "5", "50", "500", "airplane", "animal", "apple", "backpack", "banana", "bed", "bench", "bike", "boat", "book", "bottle", "bowl", "broccoli", "cake", "carrot", "cell phone", "chair", "clock", "couch", "crosswalk", "cup", "desk", "dobby", "donut", "door", "fire hydrant", "fork", "handbag", "hazard-sign", "keyboard", "kite", "knife", "laptop", "microwave", "mouse", "orange", "oven", "parking meter", "person", "pizza", "potted plant", "refrigerator", "remote", "sandwich", "scissors", "sink", "spoon", "stairs", "stop sign", "teddy bear", "toaster", "toilet", "traffic light", "train", "tv", "umbrella", "vehicle"
+
     };
+
+    
 
     public YoloInferenceService(byte[] modelBytes) {
         var options = new SessionOptions();
