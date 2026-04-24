@@ -7,7 +7,6 @@ namespace Hachiko;
 public partial class MainPage : ContentPage {
 
     public AppPage CurrentPage { get; private set; }
-
     public MainPage() {
         InitializeComponent();
         ShowPage(new Home());

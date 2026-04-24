@@ -1,7 +1,13 @@
-﻿namespace Hachiko;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public enum AppPage {
-    Home,
-    Object,
-    Smart
+namespace Hachiko {
+    public enum AppPage {
+        Home,
+        Object,
+        Smart
+    }
 }
